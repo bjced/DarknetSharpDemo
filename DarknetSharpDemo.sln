@@ -9,26 +9,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Alturos.Yolo", "Alturos.Yol
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
-		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{46496DCD-A519-4BE8-93F7-E32E51D0F13D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{46496DCD-A519-4BE8-93F7-E32E51D0F13D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{46496DCD-A519-4BE8-93F7-E32E51D0F13D}.Debug|x64.ActiveCfg = Debug|x64
 		{46496DCD-A519-4BE8-93F7-E32E51D0F13D}.Debug|x64.Build.0 = Debug|x64
-		{46496DCD-A519-4BE8-93F7-E32E51D0F13D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{46496DCD-A519-4BE8-93F7-E32E51D0F13D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{46496DCD-A519-4BE8-93F7-E32E51D0F13D}.Release|x64.ActiveCfg = Release|x64
 		{46496DCD-A519-4BE8-93F7-E32E51D0F13D}.Release|x64.Build.0 = Release|x64
-		{BFDB287F-7E23-4D44-B114-DF2E05C2CF04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BFDB287F-7E23-4D44-B114-DF2E05C2CF04}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BFDB287F-7E23-4D44-B114-DF2E05C2CF04}.Debug|x64.ActiveCfg = Debug|x64
 		{BFDB287F-7E23-4D44-B114-DF2E05C2CF04}.Debug|x64.Build.0 = Debug|x64
-		{BFDB287F-7E23-4D44-B114-DF2E05C2CF04}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BFDB287F-7E23-4D44-B114-DF2E05C2CF04}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BFDB287F-7E23-4D44-B114-DF2E05C2CF04}.Release|x64.ActiveCfg = Release|x64
 		{BFDB287F-7E23-4D44-B114-DF2E05C2CF04}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection

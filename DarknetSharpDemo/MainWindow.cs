@@ -78,10 +78,17 @@ namespace DarknetSharpDemo
         {         
             if (configurationDetector == null)
             {
-                var config = configs.Find(x => x.Name == "bunny").Conf;
-                configurationDetector = new ConfigurationDetector(config);
-                config = configurationDetector.Detect();
-                yoloWrapper = new YoloWrapper(config);
+                var config = configs.Find(x => x.Name == "t2").Conf;
+                if (config.IsValid)
+                {
+                    configurationDetector = new ConfigurationDetector(config);
+                    config = configurationDetector.Detect();
+                    yoloWrapper = new YoloWrapper(config);
+                }
+                else
+                {
+                    throw new InvalidDataException("Configuration files missing!");
+                }
             }
         }
 

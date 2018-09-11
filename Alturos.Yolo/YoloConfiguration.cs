@@ -1,4 +1,6 @@
-﻿namespace Alturos.Yolo
+﻿using System.IO;
+
+namespace Alturos.Yolo
 {
     public class YoloConfiguration
     {
@@ -12,5 +14,7 @@
             this.WeightsFile = weightsFile;
             this.NamesFile = namesFile;
         }
+
+        public bool IsValid => File.Exists(ConfigFile) && File.Exists(WeightsFile) && File.Exists(NamesFile);
     }
 }
