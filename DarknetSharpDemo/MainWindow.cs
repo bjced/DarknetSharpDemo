@@ -4,36 +4,39 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DarknetSharpDemo
 {
-    public partial class MainWindow : Form
+    public partial class MainWindow : Form 
     {
-
         BackgroundWorker _bw = new BackgroundWorker();
         int _framerate = 10;
         ConfigurationDetector configurationDetector = null;
-        YoloConfiguration config;
         YoloWrapper yoloWrapper;
         AutoResetEvent ev = new AutoResetEvent(true);
         
 
         class YoloEntry
         {
-            public readonly string Name;
+            public enum YoloSelection
+            {
+                T2,
+                BUNNY
+            }
+            public readonly YoloSelection Selection;
             public readonly YoloConfiguration Conf;
 
-            public YoloEntry(string name, YoloConfiguration conf)
+            public YoloEntry(YoloSelection selection, YoloConfiguration conf)
             {
-                Name = name;
+                Selection = selection;
                 Conf = conf;
             }
         }
@@ -42,11 +45,56 @@ namespace DarknetSharpDemo
         {
             InitializeComponent();
             SetupBackgroundWorker();
-            List<YoloEntry> configs = new List<YoloEntry>();
-            configs.Add(new YoloEntry("t2", new YoloConfiguration("yolov2-tiny.cfg", "yolov2-tiny.weights", "coco.names")));
-            configs.Add(new YoloEntry("bunny", new YoloConfiguration("yolov3-tiny-tobii-bunny.cfg", "yolov3-tiny-tobii-bunny.weights", "bunny.names")));
+            List<YoloEntry> configs = new List<YoloEntry>
+            {
+                new YoloEntry(YoloEntry.YoloSelection.T2, new YoloConfiguration("yolov2-tiny.cfg", "yolov2-tiny.weights", "coco.names")),
+                new YoloEntry(YoloEntry.YoloSelection.BUNNY, new YoloConfiguration("yolov3-tiny-tobii-bunny.cfg", "yolov3-tiny-tobii-bunny.weights", "bunny.names"))
+            };
 
-            SetupYolo(configs);
+            SetupYolo(configs, YoloEntry.YoloSelection.T2);
+
+            List<MenuItem> deviceMenuItems = new List<MenuItem>();
+
+            MenuItem playbackMenuItem = new MenuItem("Start playback", new EventHandler(Playback));
+            deviceMenuItems.Add(new MenuItem("-"));
+            deviceMenuItems.Add(playbackMenuItem);
+            MenuItem cocoMenuItem = new MenuItem("Coco", new EventHandler(Coco))
+            {
+                Checked = true
+            };
+            deviceMenuItems.Add(cocoMenuItem);
+            MenuItem bunnyMenuItem = new MenuItem("Bunny", new EventHandler(Bunny));
+            deviceMenuItems.Add(bunnyMenuItem);
+
+            _pictureBox1.ContextMenu = new ContextMenu(deviceMenuItems.ToArray());
+        }
+
+        private void Playback(object sender, EventArgs e)
+        {
+            ((MenuItem)sender).Checked = !((MenuItem)sender).Checked;
+            ((MenuItem)sender).Text = ((MenuItem)sender).Checked?"Stop playback": "Start playback";
+            if (_bw.IsBusy)
+            {
+                _bw.CancelAsync();
+            }
+            else
+            {
+                _bw.RunWorkerAsync();
+            }
+        }
+
+        private void Coco(object sender, EventArgs e)
+        {
+            ((MenuItem)sender).Checked = !((MenuItem)sender).Checked;
+            if (_bw.IsBusy)
+            {
+                _bw.CancelAsync();
+            }
+        }
+
+        private void Bunny(object sender, EventArgs e)
+        {
+            ((MenuItem)sender).Checked = !((MenuItem)sender).Checked;
         }
 
         private void EvalAndDraw()
@@ -56,15 +104,10 @@ namespace DarknetSharpDemo
 
             try
             {
-                List<YoloItem> items;
                 using (WebClient client = new WebClient())
                 {
-                    using (MemoryStream ms = new MemoryStream(client.DownloadData(new Uri(_uripath))))
-                    {
-                        items = yoloWrapper.Detect(ms.ToArray()).ToList();
-                        DrawImage(items, ms);
-                        ev.Set();
-                    }
+                    client.DownloadDataCompleted += DownloadDataCompleted;
+                    client.DownloadDataAsync(new Uri(_uripath));
                 }
             }
             catch (WebException)
@@ -74,11 +117,31 @@ namespace DarknetSharpDemo
 
         }
 
-        private void SetupYolo(List<YoloEntry> configs)
+        private void DownloadDataCompleted(object sender, DownloadDataCompletedEventArgs e)
+        {
+            try
+            {
+                byte[] raw = e.Result;
+
+                using (MemoryStream ms = new MemoryStream(raw))
+                {
+                    List<YoloItem> items = yoloWrapper.Detect(ms.ToArray()).ToList();
+                    DrawImage(items, ms);
+                    ev.Set();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Got exception: " + ex.Message);
+            }
+
+        }
+
+        private void SetupYolo(List<YoloEntry> configs, YoloEntry.YoloSelection selection)
         {         
             if (configurationDetector == null)
             {
-                var config = configs.Find(x => x.Name == "t2").Conf;
+                var config = configs.Find(x => x.Selection == selection).Conf;
                 if (config.IsValid)
                 {
                     configurationDetector = new ConfigurationDetector(config);
@@ -90,6 +153,21 @@ namespace DarknetSharpDemo
                     throw new InvalidDataException("Configuration files missing!");
                 }
             }
+        }
+
+        public void DrawString()
+        {
+            Graphics formGraphics = this.CreateGraphics();
+            string drawString = "Sample Text";
+            Font drawFont = new Font("Arial", 16);
+            SolidBrush drawBrush = new SolidBrush(Color.Black);
+            float x = 150.0F;
+            float y = 50.0F;
+            StringFormat drawFormat = new StringFormat();
+            formGraphics.DrawString(drawString, drawFont, drawBrush, x, y, drawFormat);
+            drawFont.Dispose();
+            drawBrush.Dispose();
+            formGraphics.Dispose();
         }
 
         private void DrawImage(List<YoloItem> items, MemoryStream ms, YoloItem selectedItem = null)
@@ -118,6 +196,11 @@ namespace DarknetSharpDemo
                         }
 
                         canvas.DrawRectangle(pen, x, y, width, height);
+
+                        Font drawFont = new Font("Arial", 16);
+                        SolidBrush drawBrush = new SolidBrush(Color.Green);
+                        StringFormat drawFormat = new StringFormat();
+                        canvas.DrawString(item.Type, drawFont, drawBrush, x-10, y-25, drawFormat);
                         canvas.Flush();
                     }
                 }
@@ -157,39 +240,33 @@ namespace DarknetSharpDemo
         {
             // Setup background worker
             _bw.DoWork += BackgroundWorkerDoWork;
-            _bw.ProgressChanged += BackgroundWorkerProgressChanged;
-            _bw.WorkerReportsProgress = true;
             _bw.WorkerSupportsCancellation = true;
         }
+
         private void BackgroundWorkerDoWork(object sender, DoWorkEventArgs e)
         {
             int i = 0;
             while (_bw.CancellationPending == false)
             {
-                Task.Delay(1000 / _framerate).Wait();
+                Stopwatch stopwatch = new Stopwatch();
+                
+                if (ev.WaitOne(1000 / _framerate) == true)
+                {
+                    stopwatch.Start();
+                    EvalAndDraw();
+                    stopwatch.Stop();
+                    int delay = 1000 / _framerate - (int)stopwatch.ElapsedMilliseconds;
+                    delay = (delay < 0) ? 0 : delay;
+                    Task.Delay(delay).Wait();
+                }
+
                 _bw.ReportProgress(i); //Use for UI updates
                 i++;
             }
         }
 
-        private async void BackgroundWorkerProgressChanged(object sender, System.ComponentModel.ProgressChangedEventArgs e)
-        {
-            if (ev.WaitOne(100) == true)
-            {
-                await Task.Run(() => EvalAndDraw());
-            }
-        }
 
-        private void _pictureBox1_Click(object sender, EventArgs e)
-        {
-            if (_bw.IsBusy)
-            {
-                _bw.CancelAsync();
-            }
-            else
-            {
-                _bw.RunWorkerAsync();
-            }
-        }
+
+
     }
 }

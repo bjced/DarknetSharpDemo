@@ -141,7 +141,7 @@ namespace Alturos.Yolo
                     report.MicrosoftVisualCPlusPlus2017RedistributableExists = true;
                 }
             }
-
+            
             if (File.Exists(@"x64\cudnn64_7.dll"))
             {
                 report.CudnnExists = true;
@@ -220,7 +220,7 @@ namespace Alturos.Yolo
                     throw new NotImplementedException("c++ dll compiled incorrectly");
                 }
             }
-            catch (Exception exception)
+            catch (Exception)
             {
                 return null;
             }
