@@ -20,7 +20,7 @@ namespace Alturos.Yolo
 
         public DetectionSystem DetectionSystem = DetectionSystem.Unknown;
         public EnvironmentReport EnvironmentReport { get; private set; }
-
+        private bool disposed = true;
         #region DllImport Cpu
 
         [DllImport(YoloLibraryCpu, EntryPoint = "init")]
@@ -62,24 +62,31 @@ namespace Alturos.Yolo
         public YoloWrapper(YoloConfiguration yoloConfiguration)
         {
             this.Initialize(yoloConfiguration.ConfigFile, yoloConfiguration.WeightsFile, yoloConfiguration.NamesFile, 0);
+            disposed = false;
         }
 
         public YoloWrapper(string configurationFilename, string weightsFilename, string namesFilename, int gpu = 0)
         {
             this.Initialize(configurationFilename, weightsFilename, namesFilename, gpu);
+            disposed = false;
         }
 
         public void Dispose()
         {
-            switch (this.DetectionSystem)
+            if (!disposed)
             {
-                case DetectionSystem.CPU:
-                    DisposeYoloCpu();
-                    break;
-                case DetectionSystem.GPU:
-                    DisposeYoloGpu();
-                    break;
+                switch (this.DetectionSystem)
+                {
+                    case DetectionSystem.CPU:
+                        DisposeYoloCpu();
+                        break;
+                    case DetectionSystem.GPU:
+                        DisposeYoloGpu();
+                        break;
+                }
+                disposed = true;
             }
+
         }
 
         private void Initialize(string configurationFilename, string weightsFilename, string namesFilename, int gpu = 0)
@@ -191,6 +198,10 @@ namespace Alturos.Yolo
 
         public IEnumerable<YoloItem> Detect(byte[] imageData)
         {
+            if (disposed)
+            {
+                return new List<YoloItem>(0);
+            }
             if (!this._imageAnalyzer.IsValidImageFormat(imageData))
             {
                 throw new Exception("Invalid image data, wrong image format");
